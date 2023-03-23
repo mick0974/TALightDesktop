@@ -1,50 +1,36 @@
-import { EventEmitter } from "@angular/core";
-import { Packets } from "../api-service/api.packets";
-import { ApiService, Meta } from "../api-service/api.service";
-import { ClangCompilerService } from "../clang-compiler-service/clang-compiler.service";
-import { FsNodeFile, FsNodeFolder, FsNodeList, FsService, FsServiceDriver as FsDriver } from "../fs-service/fs.service"
-import { PyodideDriver } from "../python-compiler-service/pydiode-driver";
-import { PythonCompiler, PythonCompilerService } from "../python-compiler-service/python-compiler.service";
+import { CompilerDriver } from "../compiler-service/compiler-service.types";
+import { FsNodeFile, FsNodeFolder, FsNodeList, FsServiceDriver as FsDriver, FsServiceDriver } from "../fs-service/fs.service.types"
 
-export enum ProjectType{
+export enum ProjectLanguage{
   PY='PY',
   C='C',
   CPP='CPP',
 }
 
-export class ProjectList extends Array<ProjectEnvironment>{}
+export class ProjectList extends Array<ProjectEnvironment>{};
+export interface ProjectDriver extends FsServiceDriver, CompilerDriver{};
 
 
-export class ProjectEnvironment{
 
-  public config?: ProjectConfig;
+export abstract class ProjectEnvironment{
+  
+  public config: ProjectConfig | null  = null;
   public isLoaded = false;
   
-  //FS
-  public fs?: FsDriver;
-  public fsroot?:FsNodeFolder;
-  public fslist?:FsNodeList;
-  public fslistfiles?:Array<FsNodeFile>;
-
-  //Compiler
-  public compiler?: PythonCompiler;
+  constructor(
+    public laguange: ProjectLanguage,
+    public driver: ProjectDriver
+  ){
+    ProjectConfig.load(this.driver).then(config=>{
+      this.config = config;
+      if(config){ this.loadProject(); }
+    })
+  }
   
-  async load(){
-    if(!this.fs){return false}
-    let config = await ProjectConfig.load(this.fs)
-    if(config){return false;}
-    //load more
-    return true;
-  }
-
-  public activate(){
-    //subscribe
-  }
-
-  public deactivate(){
-    //unsubscribe
-  }
+  abstract loadProject():boolean;
 }
+
+
 
 
 
@@ -55,11 +41,11 @@ export class ProjectConfig {
   PREFERED_LANG="it"
   
   TAL_SERVERS = [ //TODO
+    'wss://ta.di.univr.it/algo',
     "wss://ta.di.univr.it/sfide",
-    "wss://ta.di.univr.it/rtal",
     "ws://localhost:8008/",
   ]
-  TAL_SERVER = "wss://ta.di.univr.it/sfide" //TODO
+  TAL_SERVER = "wss://ta.di.univr.it/algo" //TODO
   TAL_PROBLEM = "" //TODO
   TAL_SERVICE = "" //TODO
   TAL_TOKEN = "" //TODO
@@ -79,7 +65,7 @@ export class ProjectConfig {
   CONFIG_NAME = 'talight.json'
   CONFIG_PATH = this.DIR_PROJECT + this.CONFIG_NAME
 
-  PIP_PACKAGES: string[] = []
+  EXTRA_PACKAGES: string[] = []
 
   public static readonly defaultConfig = new ProjectConfig()
 

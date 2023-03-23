@@ -1,10 +1,8 @@
 import { EventEmitter, Injectable, Input } from '@angular/core';
 import { ApiService } from '../api-service/api.service';
-import { ClangCompilerService } from '../clang-compiler-service/clang-compiler.service';
+import { CompilerDriver } from '../compiler-service/compiler-service.types';
 import { FsService } from '../fs-service/fs.service';
-import { PyodideDriver } from '../python-compiler-service/pydiode-driver';
-import { PythonCompilerService } from '../python-compiler-service/python-compiler.service';
-import { ProjectEnvironment, ProjectType } from './project-manager.types';
+import { ProjectDriver, ProjectEnvironment, ProjectLanguage } from './project-manager.types';
 
 
 @Injectable({
@@ -14,19 +12,11 @@ export class ProjectManagerService {
   
   projects = new Array<ProjectEnvironment>();
   private _selectedProject?: ProjectEnvironment;
-  driver
   
   @Input("onProjectSelected") onProjectSelected = new EventEmitter<ProjectEnvironment>();
   @Input("onProjectListChanged") onProjectListChanged = new EventEmitter<void>();
 
-  constructor(
-      public fs:FsService,  
-      public api:ApiService,
-      public python:PythonCompilerService,
-      public clang:ClangCompilerService,
-    ) {
-      this.driver = python.driver;
-  }
+  constructor(){}
 
 
   public set currentProject(project:ProjectEnvironment | undefined){
@@ -39,11 +29,20 @@ export class ProjectManagerService {
   public get currentProject(): ProjectEnvironment | undefined{
     return this._selectedProject
   }
+
+  public listProject(){
+    let projects = new Array<ProjectEnvironment>();
+    //TODO: 
+    return projects
+  }
   
+  public addProject(project:ProjectEnvironment){
+    if( this.projects.indexOf(project) == -1 ){
+      this.projects.push(project)
+    }
+  }
 
-
-  public createProject(name:string, mount:string, root:string, ){
-    let project = new ProjectEnvironment();
+  public openProject(project:ProjectEnvironment){
     //TODO: 
     return project
   }
@@ -53,17 +52,6 @@ export class ProjectManagerService {
     return project
   }
 
-  public listProject(){
-    let projects = new Array<ProjectEnvironment>();
-    //TODO: 
-    return projects
-  }
-
-  public addProject(project:ProjectEnvironment){
-    if( this.projects.indexOf(project) == -1 ){
-      this.projects.push(project)
-    }
-  }
 
 
 

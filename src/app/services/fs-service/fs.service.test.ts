@@ -1,17 +1,16 @@
 import { resolve } from 'dns';
 import { createFs } from 'indexeddb-fs';
-import { FsService } from './fs.service';
-import { FsNodeFile, FsNodeFolder, FsServiceDriver } from './fs.service.types';
+import { FsNodeFile, FsNodeFolder, FsService, FsServiceDriver } from './fs.service';
 
 
 export class IndexeddbFsDriver implements FsServiceDriver {
   public fs;
-  public mountRoot = "root"
+  public rootDir = "root"
   public options = {
     databaseVersion:    1,
     objectStoreName:    'files',
     databaseName:       'indexeddb',
-    rootDirectoryName:  this.mountRoot
+    rootDirectoryName:  this.rootDir
   }
 
   constructor() { 
@@ -57,7 +56,7 @@ export class IndexeddbFsDriver implements FsServiceDriver {
   }
   
   async scanDirectory(path?:string):Promise<FsNodeFolder>{
-    if (!path){path = this.mountRoot;}
+    if (!path){path = this.rootDir;}
     return this.scanDirectory_recursive(path, true)
   }
 

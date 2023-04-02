@@ -170,7 +170,7 @@ export namespace Packets{
     export class Message extends Packets.Message {}
     export class Handshake extends Message {
       public magic:string = "rtal";
-      public version:number = 3;
+      public version:number = 4;
     }
     export class MetaList extends Message {}
     export class  Attachment extends Message{
@@ -241,8 +241,8 @@ export namespace Packets{
     }
     export class BinaryDataHeader extends Message {
       public name:string = "";
-      public size:string = "";
-      public hash:string = "";
+      public size:number = 0;
+      public hash:number[] = [];
     }
     export class ConnectBegin extends Message {
       public status = {"Ok": [""], "Err": ""};

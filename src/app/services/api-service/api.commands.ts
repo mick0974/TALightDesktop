@@ -11,7 +11,7 @@ export namespace Commands{
       public debug=false;
       public onReciveHandshake?:(message:Packets.Reply.Handshake)=>void;
       public onReciveBinary?:(message:string)=>void;
-      public onReciveUndecodedBinary?:(message:ArrayBuffer)=>void;
+      
       public onRecive?:(message:Packets.PacketsPayload)=>void;
       public onClose?:()=>void;
       public onError?:(error:any)=>void;
@@ -25,7 +25,7 @@ export namespace Commands{
         this.tal.onClose = ()=>{ this.didClose(); };
         this.tal.onRecive = (payload)=> { this.didRecive(payload) }
         this.tal.onReciveBinary = (payload)=> { this.didReciveBinary(payload) }
-        this.tal.onReciveUndecodedBinary = (payload)=> { this.didReciveUndecodedBinary(payload) }
+        
       }
 
       public run(){
@@ -60,10 +60,7 @@ export namespace Commands{
         if(this.onReciveBinary){this.onReciveBinary(payload)}
       }
 
-      public didReciveUndecodedBinary(payload:ArrayBuffer){
-        this.log("didReciveUndecodedBinary:\n");
-        if(this.onReciveUndecodedBinary){this.onReciveUndecodedBinary(payload)}
-      }
+      
 
       public async didRecive(payload:Packets.PacketsPayload){
         this.log("didRecive");
@@ -104,12 +101,15 @@ export namespace Commands{
 
     export class Attchment extends Command{
       public onReciveAttachment?:(message:Packets.Reply.Attachment )=>void;
-      public onReciveAttachmentInfo?:(message:Packets.Reply.BinaryDataHeader)=>void;
+      public onReciveBinaryDataHeader?:(message:Packets.Reply.BinaryDataHeader)=>void;
+      public onReciveUndecodedBinary?:(message:ArrayBuffer)=>void;
 
+      private hash_server:number[] = [];
       private msg:Packets.Request.Attachment;
 
       constructor(url:string, problem_name:string){
         super(url, false);
+        this.tal.onReciveUndecodedBinary = (payload)=> { this.didReciveUndecodedBinary(payload) }
 
         this.msg = new Packets.Request.Attachment(problem_name);
       }
@@ -128,8 +128,7 @@ export namespace Commands{
         if (message){ this.didRecieveAttachment(message); }
 
         message = payload.getMessage(Packets.Reply.BinaryDataHeader)
-        if (message){ this.didRecieveAttachmentInfo(message);}
-
+        if (message){ this.didRecieveBinaryDataHeader(message);}
       }
 
       public didRecieveAttachment(message: Packets.Reply.Attachment){
@@ -137,11 +136,39 @@ export namespace Commands{
         if (this.onReciveAttachment ) { this.onReciveAttachment(message); }
       }
 
-      public didRecieveAttachmentInfo(message: Packets.Reply.BinaryDataHeader){
-        this.log("AttachmentInfo");
-        if (this.onReciveAttachmentInfo ) { this.onReciveAttachmentInfo(message); }
+      public didRecieveBinaryDataHeader(message: Packets.Reply.BinaryDataHeader){
+        this.log("BinaryDataHeader");
+
+        console.log("BinaryDataHeader: ", message);
+        this.hash_server = message.hash;
+        if (this.onReciveBinaryDataHeader ) { this.onReciveBinaryDataHeader(message); }
       }
 
+      public async didReciveUndecodedBinary(payload:ArrayBuffer){
+        this.log("didReciveUndecodedBinary:\n");
+
+        let hashHex =  await sha256(new Uint8Array(payload))
+
+        console.log("hash: ", fromHexString(hashHex));
+
+        let hash = fromHexString(hashHex);
+
+        let hash_client:number[] = []
+        let i = 0;
+        hash.forEach(elem => {
+          hash_client[i] = parseInt(elem.toString(), 10);
+          i++;
+        })
+
+        var is_same = (this.hash_server.length == hash_client.length) && this.hash_server.every(function(element, index) {
+          return element === hash_client[index]; 
+        });
+
+        if(this.onReciveUndecodedBinary && is_same)
+          this.onReciveUndecodedBinary(payload)
+        else 
+          alert("Error: hashes different");
+      }
     }
 
     export class Connect extends Command{
@@ -179,7 +206,6 @@ export namespace Commands{
             for (let [nameArgFile, content] of this.files.entries()) {
               let hashHex =  await sha256(content)
 
-              console.log("hash: ");
               console.log("hash: ", fromHexString(hashHex));
 
               let hash = fromHexString(hashHex);

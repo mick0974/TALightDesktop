@@ -118,7 +118,7 @@ export class ApiService {
       if(onAttachment) { onAttachment() }
     }
 
-    cmdGet.onReciveAttachmentInfo = (message) => {
+    cmdGet.onReciveBinaryDataHeader = (message) => {
       this.stateGood();
       if(onAttachmentInfo) { onAttachmentInfo(message) }
     }

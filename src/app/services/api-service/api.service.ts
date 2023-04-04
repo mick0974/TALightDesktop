@@ -103,7 +103,8 @@ export class ApiService {
     onAttachment?: ()=>void,
     onAttachmentInfo?: (message: Packets.Reply.BinaryDataHeader)=>void,
     onData?: (data: ArrayBuffer)=>void,
-    onError?: (error: string)=>void
+    onError?: (error: string)=>void,
+    onHashError?: ()=>void
   ){
     this.stateMaybe()
     let cmdGet = new Commands.Attchment(this._url, problemName);
@@ -131,6 +132,11 @@ export class ApiService {
     cmdGet.onError = (error) => {
       this.stateBad();
       if(onError) {onError(error)}
+    }
+
+    cmdGet.onHashError = () => {
+      this.stateBad();
+      if(onHashError) {onHashError()}
     }
 
     cmdGet.run();

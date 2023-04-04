@@ -103,6 +103,7 @@ export namespace Commands{
       public onReciveAttachment?:(message:Packets.Reply.Attachment )=>void;
       public onReciveBinaryDataHeader?:(message:Packets.Reply.BinaryDataHeader)=>void;
       public onReciveUndecodedBinary?:(message:ArrayBuffer)=>void;
+      public onHashError?: ()=>void;
 
       private hash_server:number[] = [];
       private msg:Packets.Request.Attachment;
@@ -164,10 +165,13 @@ export namespace Commands{
           return element === hash_client[index]; 
         });
 
-        if(this.onReciveUndecodedBinary && is_same)
-          this.onReciveUndecodedBinary(payload)
-        else 
-          alert("Error: hashes different");
+        if(this.onReciveUndecodedBinary)
+        {
+          if(is_same)
+            this.onReciveUndecodedBinary(payload)
+          else
+            if(this.onHashError) {this.onHashError();}
+        }
       }
     }
 
